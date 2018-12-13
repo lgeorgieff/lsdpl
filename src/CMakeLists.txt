@@ -3,7 +3,10 @@ project(lsdpl)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(lsdpl main.cpp file_hash.cpp)
+add_executable(lsdpl
+        main.cpp
+        file_hash.cpp
+        scan_fs.hpp)
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(OpenSSL REQUIRED)
