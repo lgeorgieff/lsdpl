@@ -3,6 +3,7 @@
 #include "scan_fs.hpp"
 
 #include <iterator>
+#include <iostream>
 
 template<typename HASH>
 lsdpl::scan_fs<HASH>::scan_fs(const std::string &path)
@@ -20,5 +21,33 @@ lsdpl::scan_fs<HASH>::scan_fs(const std::vector<std::string> &paths)
 
 template<typename HASH>
 void lsdpl::scan_fs<HASH>::start() {
-
+    HASH file_hash;
+    while(!queued_paths_.empty()) {
+        boost::filesystem::path path{queued_paths_.top()};
+        queued_paths_.pop();
+        if(boost::filesystem::is_symlink(path)) {
+            // If the file is a symlink we don't compare it to other files but ignore it
+            continue;
+        } else if(boost::filesystem::is_directory(path)) {
+            // We are not interested in directories but in files only, so we ignore it
+            boost::filesystem::directory_iterator dir_iter, dir_end;
+            try {
+                dir_iter = boost::filesystem::directory_iterator{path};
+            } catch(boost::filesystem::filesystem_error &err) {
+                dir_iter = dir_end;
+                std::cerr << "Could not read directory " << path.string() << std::endl;
+            }
+            for(; dir_iter != dir_end; ++dir_iter) queued_paths_.push(dir_iter->path());
+            continue;
+        } else if(boost::filesystem::is_regular_file(path)) {
+            auto hash{file_hash(path)};
+            if(hash.empty()) {
+                std::cerr << "Could not create hash for " << path.string() << std::endl;
+            } else {
+                auto original{hashes_.find(hash)};
+                if (original == hashes_.end()) hashes_[hash] = path;
+                else std::cout << path.string() << " -> " << original->second.string() << std::endl;
+            }
+        }
+    }
 }

@@ -2,14 +2,12 @@
 #include "scan_fs.hpp"
 
 #include <iostream>
-
+#include "boost/filesystem.hpp"
 
 int main() {
-    lsdpl::file_hash hash;
-    std::cout << hash("/tmp/test.txt") << std::endl;
-
     std::vector<std::string> paths{"/tmp", ".."};
     lsdpl::scan_fs<lsdpl::file_hash> scan_fs{paths};
+    scan_fs.start();
 
     return 0;
 }
