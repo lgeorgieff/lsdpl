@@ -6,14 +6,14 @@
 #include <iostream>
 
 template<typename HASH>
-lsdpl::scan_fs<HASH>::scan_fs(const std::string &path)
-    :hashes_{1024}, queued_paths_{} {
+lsdpl::scan_fs<HASH>::scan_fs(const std::string &path, bool suppress_errors)
+    :hashes_{1024}, queued_paths_{}, suppress_errors_{suppress_errors} {
     queued_paths_.push(boost::filesystem::absolute(path).normalize());
 }
 
 template<typename HASH>
-lsdpl::scan_fs<HASH>::scan_fs(const std::vector<std::string> &paths)
-        :hashes_{1024}, queued_paths_{} {
+lsdpl::scan_fs<HASH>::scan_fs(const std::vector<std::string> &paths, bool suppress_errors)
+        :hashes_{1024}, queued_paths_{}, suppress_errors_{suppress_errors} {
     std::for_each(paths.begin(), paths.end(), [this](const auto &path){
          queued_paths_.push(boost::filesystem::absolute(path).normalize());
     });
@@ -35,14 +35,14 @@ void lsdpl::scan_fs<HASH>::start() {
                 dir_iter = boost::filesystem::directory_iterator{path};
             } catch(boost::filesystem::filesystem_error &err) {
                 dir_iter = dir_end;
-                std::cerr << "Could not read directory " << path.string() << std::endl;
+                if(!suppress_errors_) std::cerr << "Could not read directory " << path.string() << std::endl;
             }
             for(; dir_iter != dir_end; ++dir_iter) queued_paths_.push(dir_iter->path());
             continue;
         } else if(boost::filesystem::is_regular_file(path)) {
             auto hash{file_hash(path)};
             if(hash.empty()) {
-                std::cerr << "Could not create hash for " << path.string() << std::endl;
+                if(!suppress_errors_) std::cerr << "Could not create hash for " << path.string() << std::endl;
             } else {
                 auto original{hashes_.find(hash)};
                 if (original == hashes_.end()) hashes_[hash] = path;

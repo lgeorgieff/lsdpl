@@ -7,6 +7,7 @@
 
 DEFINE_bool(remove_first, false, "Remove (always) the first occurrence of a duplicate");
 DEFINE_bool(remove_last, false, "Remove (always) the last occurrence of a duplicate");
+DEFINE_bool(suppress_errors, false, "Suppress error messages (permission denied, ...)");
 
 int main(int argc, char **argv) {
     gflags::SetUsageMessage("Lists (and removes) all duplicate files based on their content");
@@ -29,7 +30,7 @@ int main(int argc, char **argv) {
     } else if(FLAGS_remove_last) {
         // TODO: implement
     } else {
-        lsdpl::scan_fs<lsdpl::file_hash> scan_fs{paths};
+        lsdpl::scan_fs<lsdpl::file_hash> scan_fs{paths, FLAGS_suppress_errors};
         scan_fs.start();
     }
 
