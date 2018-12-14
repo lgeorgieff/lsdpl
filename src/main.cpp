@@ -3,11 +3,35 @@
 
 #include <iostream>
 #include "boost/filesystem.hpp"
+#include "gflags/gflags.h"
 
-int main() {
-    std::vector<std::string> paths{"/tmp", ".."};
-    lsdpl::scan_fs<lsdpl::file_hash> scan_fs{paths};
-    scan_fs.start();
+DEFINE_bool(remove_first, false, "Remove (always) the first occurrence of a duplicate");
+DEFINE_bool(remove_last, false, "Remove (always) the last occurrence of a duplicate");
+
+int main(int argc, char **argv) {
+    gflags::SetUsageMessage("Lists (and removes) all duplicate files based on their content");
+    gflags::SetVersionString("0.0.1");
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+    if(FLAGS_remove_first && FLAGS_remove_last) {
+        std::cerr << "ERROR: remove_first and remove_last must not be set concurrently" << std::endl;
+        return 1;
+    }
+
+    // Get the target directories or use cwd if no once is specified
+    std::vector<std::string> paths;
+    paths.reserve(argc - 1);
+    for(int i{1}; i < argc; ++i) paths.push_back(argv[i]);
+    if(argc == 1) paths.push_back(".");
+
+    if(FLAGS_remove_first) {
+        // TODO: implement
+    } else if(FLAGS_remove_last) {
+        // TODO: implement
+    } else {
+        lsdpl::scan_fs<lsdpl::file_hash> scan_fs{paths};
+        scan_fs.start();
+    }
 
     return 0;
 }
