@@ -1,5 +1,6 @@
 #include "file_hash.hpp"
 #include "scan_fs.hpp"
+#include "rm_first.hpp"
 
 #include <iostream>
 #include "boost/filesystem.hpp"
@@ -26,7 +27,8 @@ int main(int argc, char **argv) {
     if(argc == 1) paths.push_back(".");
 
     if(FLAGS_remove_first) {
-        // TODO: implement
+        lsdpl::rm_first<lsdpl::file_hash> rm_first{paths, FLAGS_suppress_errors};
+        rm_first.start();
     } else if(FLAGS_remove_last) {
         // TODO: implement
     } else {
@@ -49,23 +51,18 @@ int main(int argc, char **argv) {
         - unordered_map<hash, (regular) file path>
         + destructor
         + constructor(const string &paths...)
-        + star
+        + start
         // no other constructors
         // no assignment operators
     }
 
     template<typename file_hash>
-    class rm_fs : public scan_fs {
-        # rm_duplicate(const std::string &original_file_path, const std::string &duplicate_file_path)
-    }
-
-    template<typename file_hash>
-    class rm_original : public rm_fs {
+    class rm_first : public scan_fs {
         - rm_duplicate(const std::string &original_file_path, const std::string &duplicate_file_path)
     }
 
     template<typename file_hash>
-    class rm_duplicate : public rm_fs {
+    class rm_last : public scan_fs {
         - rm_duplicate(const std::string &original_file_path, const std::string &duplicate_file_path)
     }
 

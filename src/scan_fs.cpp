@@ -2,7 +2,6 @@
 
 #include "scan_fs.hpp"
 
-#include <iterator>
 #include <iostream>
 
 template<typename HASH>
@@ -20,6 +19,16 @@ lsdpl::scan_fs<HASH>::scan_fs(const std::vector<std::string> &paths, bool suppre
 }
 
 template<typename HASH>
+void lsdpl::scan_fs<HASH>::file_operation(const boost::filesystem::path &file_path, const std::string &hash) noexcept {
+    auto original{hashes_.find(hash)};
+    if (original == hashes_.end()) hashes_[hash] = file_path;
+    else std::cout << file_path.string() << " -> " << original->second.string() << std::endl;
+}
+
+template<typename HASH>
+bool lsdpl::scan_fs<HASH>::suppress_errors() const noexcept { return suppress_errors_; }
+
+template<typename HASH>
 void lsdpl::scan_fs<HASH>::start() {
     HASH file_hash;
     while(!queued_paths_.empty()) {
@@ -33,7 +42,7 @@ void lsdpl::scan_fs<HASH>::start() {
             boost::filesystem::directory_iterator dir_iter, dir_end;
             try {
                 dir_iter = boost::filesystem::directory_iterator{path};
-            } catch(boost::filesystem::filesystem_error &err) {
+            } catch(const boost::filesystem::filesystem_error &err) {
                 dir_iter = dir_end;
                 if(!suppress_errors_) std::cerr << "Could not read directory " << path.string() << std::endl;
             }
@@ -44,9 +53,7 @@ void lsdpl::scan_fs<HASH>::start() {
             if(hash.empty()) {
                 if(!suppress_errors_) std::cerr << "Could not create hash for " << path.string() << std::endl;
             } else {
-                auto original{hashes_.find(hash)};
-                if (original == hashes_.end()) hashes_[hash] = path;
-                else std::cout << path.string() << " -> " << original->second.string() << std::endl;
+                file_operation(path, hash);
             }
         }
     }

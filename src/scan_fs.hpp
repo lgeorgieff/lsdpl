@@ -12,7 +12,8 @@ namespace lsdpl {
         explicit scan_fs(const std::string &path, bool suppress_errors = false);
         explicit scan_fs(const std::vector<std::string> &paths, bool suppress_errors = false);
 
-        virtual void start();
+        virtual void file_operation(const boost::filesystem::path &file_path, const std::string &hash) noexcept;
+        void start();
         bool suppress_errors() const noexcept;
     protected:
         std::unordered_map<std::string, boost::filesystem::path> hashes_;
