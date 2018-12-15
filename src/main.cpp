@@ -1,6 +1,7 @@
 #include "file_hash.hpp"
 #include "scan_fs.hpp"
 #include "rm_first.hpp"
+#include "rm_last.hpp"
 
 #include <iostream>
 #include "boost/filesystem.hpp"
@@ -20,7 +21,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // Get the target directories or use cwd if no once is specified
+    // Get the target directories or use cwd if no one is specified
     std::vector<std::string> paths;
     paths.reserve(argc - 1);
     for(int i{1}; i < argc; ++i) paths.push_back(argv[i]);
@@ -30,7 +31,8 @@ int main(int argc, char **argv) {
         lsdpl::rm_first<lsdpl::file_hash> rm_first{paths, FLAGS_suppress_errors};
         rm_first.start();
     } else if(FLAGS_remove_last) {
-        // TODO: implement
+        lsdpl::rm_last<lsdpl::file_hash> rm_last{paths, FLAGS_suppress_errors};
+        rm_last.start();
     } else {
         lsdpl::scan_fs<lsdpl::file_hash> scan_fs{paths, FLAGS_suppress_errors};
         scan_fs.start();
@@ -38,32 +40,3 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-
-
-/*
-    class file_hash {
-        size_t operator()(const string &file_path) const noexcept
-    }
-
-    template<typename file_hash>
-    class scan_fs(path1, path2, ...) {
-        - hash
-        - unordered_map<hash, (regular) file path>
-        + destructor
-        + constructor(const string &paths...)
-        + start
-        // no other constructors
-        // no assignment operators
-    }
-
-    template<typename file_hash>
-    class rm_first : public scan_fs {
-        - rm_duplicate(const std::string &original_file_path, const std::string &duplicate_file_path)
-    }
-
-    template<typename file_hash>
-    class rm_last : public scan_fs {
-        - rm_duplicate(const std::string &original_file_path, const std::string &duplicate_file_path)
-    }
-
- */
