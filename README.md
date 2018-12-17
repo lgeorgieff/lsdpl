@@ -18,3 +18,6 @@ Searches for duplicate files based on their actual content. It can:
 4. mkdir build && cd build
 5. cmake ..
 6. make
+
+# License
+This project is licensed under [BSD 3-Clause license](./LICENSE.txt).
