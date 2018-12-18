@@ -5,13 +5,13 @@
 #include <iostream>
 
 template<typename HASH>
-lsdpl::scan_fs<HASH>::scan_fs(const std::string &path, bool suppress_errors)
+lsdpl::scan_fs<HASH>::scan_fs(const boost::filesystem::path &path, bool suppress_errors)
     :hashes_{1024}, queued_paths_{}, suppress_errors_{suppress_errors} {
-    queued_paths_.push(boost::filesystem::absolute(path).normalize());
+    queued_paths_.push(boost::filesystem::absolute(boost::filesystem::path{path}).normalize());
 }
 
 template<typename HASH>
-lsdpl::scan_fs<HASH>::scan_fs(const std::vector<std::string> &paths, bool suppress_errors)
+lsdpl::scan_fs<HASH>::scan_fs(const std::vector<boost::filesystem::path> &paths, bool suppress_errors)
         :hashes_{1024}, queued_paths_{}, suppress_errors_{suppress_errors} {
     std::for_each(paths.begin(), paths.end(), [this](const auto &path){
          queued_paths_.push(boost::filesystem::absolute(path).normalize());
@@ -21,8 +21,11 @@ lsdpl::scan_fs<HASH>::scan_fs(const std::vector<std::string> &paths, bool suppre
 template<typename HASH>
 void lsdpl::scan_fs<HASH>::file_operation(const boost::filesystem::path &file_path, const std::string &hash) noexcept {
     auto original{hashes_.find(hash)};
-    if (original == hashes_.end()) hashes_[hash] = file_path;
-    else std::cout << file_path.string() << " -> " << original->second.string() << std::endl;
+    if (original == hashes_.end()) {
+        hashes_[hash] = file_path;
+    } else if (original->second != file_path) {
+        std::cout << file_path.string() << " -> " << original->second.string() << std::endl;
+    }
 }
 
 template<typename HASH>

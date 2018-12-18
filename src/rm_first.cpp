@@ -3,11 +3,11 @@
 #include "rm_first.hpp"
 
 template<typename HASH>
-lsdpl::rm_first<HASH>::rm_first(const std::string &path, bool suppress_errors)
+lsdpl::rm_first<HASH>::rm_first(const boost::filesystem::path &path, bool suppress_errors)
         :scan_fs<HASH>{path, suppress_errors} {}
 
 template<typename HASH>
-lsdpl::rm_first<HASH>::rm_first(const std::vector<std::string> &paths, bool suppress_errors)
+lsdpl::rm_first<HASH>::rm_first(const std::vector<boost::filesystem::path> &paths, bool suppress_errors)
         :scan_fs<HASH>{paths, suppress_errors} {}
 
 template<typename HASH>
@@ -15,7 +15,7 @@ void lsdpl::rm_first<HASH>::file_operation(const boost::filesystem::path &file_p
     auto original{scan_fs<HASH>::hashes_.find(hash)};
     if (original == scan_fs<HASH>::hashes_.end()) {
         scan_fs<HASH>::hashes_[hash] = file_path;
-    } else {
+    } else if (original->second != file_path) {
         try {
             boost::filesystem::remove(original->second);
             scan_fs<HASH>::hashes_[hash] = file_path;

@@ -9,8 +9,8 @@ namespace lsdpl {
     template<typename HASH>
     class scan_fs {
     public:
-        explicit scan_fs(const std::string &path, bool suppress_errors = false);
-        explicit scan_fs(const std::vector<std::string> &paths, bool suppress_errors = false);
+        explicit scan_fs(const boost::filesystem::path &path, bool suppress_errors = false);
+        explicit scan_fs(const std::vector<boost::filesystem::path> &paths, bool suppress_errors = false);
 
         virtual void file_operation(const boost::filesystem::path &file_path, const std::string &hash) noexcept;
         void start();

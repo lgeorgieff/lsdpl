@@ -7,8 +7,8 @@ namespace lsdpl {
     template<typename HASH>
     class rm_first : public scan_fs<HASH> {
     public:
-        explicit rm_first(const std::string &path, bool suppress_errors = false);
-        explicit rm_first(const std::vector<std::string> &paths, bool suppress_errors = false);
+        explicit rm_first(const boost::filesystem::path &path, bool suppress_errors = false);
+        explicit rm_first(const std::vector<boost::filesystem::path> &paths, bool suppress_errors = false);
 
         virtual void file_operation(const boost::filesystem::path &file_path, const std::string &hash) noexcept
             override;
