@@ -21,11 +21,8 @@ lsdpl::scan_fs<HASH>::scan_fs(const std::vector<boost::filesystem::path> &paths,
 template<typename HASH>
 void lsdpl::scan_fs<HASH>::file_operation(const boost::filesystem::path &file_path, const std::string &hash) noexcept {
     auto original{hashes_.find(hash)};
-    if (original == hashes_.end()) {
-        hashes_[hash] = file_path;
-    } else if (original->second != file_path) {
-        std::cout << file_path.string() << " -> " << original->second.string() << std::endl;
-    }
+    if (original == hashes_.end()) hashes_[hash] = file_path;
+    else std::cout << file_path.string() << " -> " << original->second.string() << std::endl;
 }
 
 template<typename HASH>

@@ -15,7 +15,7 @@ void lsdpl::rm_last<HASH>::file_operation(const boost::filesystem::path &file_pa
     auto original{scan_fs<HASH>::hashes_.find(hash)};
     if (original == scan_fs<HASH>::hashes_.end()) {
         scan_fs<HASH>::hashes_[hash] = file_path;
-    } else if (original->second != file_path) {
+    } else {
         try {
             boost::filesystem::remove(file_path);
         } catch(const boost::filesystem::filesystem_error &error) {
