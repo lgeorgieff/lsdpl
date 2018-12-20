@@ -15,7 +15,11 @@ lsdpl --suppress-errors ~/Music
 lsdpl --suppress-errors --remove-last ~/Music ~/MyMusic
 # Remove all duplicates from the folder ~/Music.
 # The last encounter of a file for which a duplicate exists is considered as the original.
-lsdpl --remove-first ~/Music
+lsdpl --remove-first ~/Music# Remove all duplicates from the folder ~/Music.
+# The last encounter of a file for which a duplicate exists is considered as the original. Eventually all symlinks
+# that are orphaned are removed.
+lsdpl --remove-first --remove-orphaned-symlinks ~/Music
+
 ```
   
 # Dependencies

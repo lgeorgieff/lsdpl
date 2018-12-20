@@ -4,15 +4,38 @@
 
 #include <iostream>
 
+namespace {
+    bool is_symlink_broken(const boost::filesystem::path &p) {
+        auto target{boost::filesystem::read_symlink(p)};
+        if(target.is_relative()) {
+            boost::filesystem::path parent;
+            if(p.has_parent_path()) parent = p.parent_path();
+            else if(p.has_root_path()) parent = p.root_path();
+            else return false;
+            target = boost::filesystem::absolute(target, parent);
+        }
+
+        if(boost::filesystem::is_symlink(target)) {
+            if(target == p) return true;
+            return is_symlink_broken(target);
+        } else {
+            return !boost::filesystem::exists(target);
+        }
+    }
+} // anonymous namespace
+
 template<typename HASH>
-lsdpl::scan_fs<HASH>::scan_fs(const boost::filesystem::path &path, bool suppress_errors)
-    :hashes_{1024}, queued_paths_{}, suppress_errors_{suppress_errors} {
+lsdpl::scan_fs<HASH>::scan_fs(const boost::filesystem::path &path, bool remove_orphaned_symlinks, bool suppress_errors)
+    :hashes_{1024}, queued_paths_{}, remove_orphaned_synmlinks_{remove_orphaned_symlinks},
+    suppress_errors_{suppress_errors}, symlinks_{} {
     queued_paths_.push(boost::filesystem::absolute(boost::filesystem::path{path}).normalize());
 }
 
 template<typename HASH>
-lsdpl::scan_fs<HASH>::scan_fs(const std::vector<boost::filesystem::path> &paths, bool suppress_errors)
-        :hashes_{1024}, queued_paths_{}, suppress_errors_{suppress_errors} {
+lsdpl::scan_fs<HASH>::scan_fs(const std::vector<boost::filesystem::path> &paths, bool remove_orphaned_symlinks,
+        bool suppress_errors)
+        :hashes_{1024}, queued_paths_{}, remove_orphaned_synmlinks_{remove_orphaned_symlinks},
+        suppress_errors_{suppress_errors}, symlinks_{} {
     std::for_each(paths.begin(), paths.end(), [this](const auto &path){
          queued_paths_.push(boost::filesystem::absolute(path).normalize());
     });
@@ -26,17 +49,35 @@ void lsdpl::scan_fs<HASH>::file_operation(const boost::filesystem::path &file_pa
 }
 
 template<typename HASH>
+void lsdpl::scan_fs<HASH>::remove_orphaned_symlinks() noexcept {
+    for(const auto &symlink : symlinks_) {
+        try {
+            if (is_symlink_broken(symlink)) {
+                try {
+                    boost::filesystem::remove(symlink);
+                } catch (const boost::filesystem::filesystem_error &error) {
+                    if (!scan_fs<HASH>::suppress_errors()) {
+                        std::cerr << "Could not remove orphaned symlink " << symlink.string() << std::endl;
+                    }
+                }
+            }
+        } catch (const boost::filesystem::filesystem_error &e) {
+            std::cerr << "Could not remove symlink " << symlink.string() << std::endl;
+        }
+    }
+}
+
+template<typename HASH>
 bool lsdpl::scan_fs<HASH>::suppress_errors() const noexcept { return suppress_errors_; }
 
 template<typename HASH>
-void lsdpl::scan_fs<HASH>::start() {
+void lsdpl::scan_fs<HASH>::travers_fs() noexcept {
     HASH file_hash;
     while(!queued_paths_.empty()) {
         boost::filesystem::path path{queued_paths_.top()};
         queued_paths_.pop();
         if(boost::filesystem::is_symlink(path)) {
-            // If the file is a symlink we don't compare it to other files but ignore it
-            continue;
+            if(remove_orphaned_synmlinks_) symlinks_.push_front(path);
         } else if(boost::filesystem::is_directory(path)) {
             // We are not interested in directories but in files only, so we ignore it
             boost::filesystem::directory_iterator dir_iter, dir_end;
@@ -57,4 +98,10 @@ void lsdpl::scan_fs<HASH>::start() {
             }
         }
     }
+}
+
+template<typename HASH>
+void lsdpl::scan_fs<HASH>::start() noexcept {
+    travers_fs();
+    if(remove_orphaned_synmlinks_) remove_orphaned_symlinks();
 }
