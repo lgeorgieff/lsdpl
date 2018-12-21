@@ -8,9 +8,9 @@ namespace lsdpl {
     class rm_last : public scan_fs<HASH> {
     public:
         explicit rm_last(const boost::filesystem::path &path, bool remove_orphaned_symlinks,
-                bool suppress_errors = false);
+                bool remove_empty_directories, bool suppress_errors);
         explicit rm_last(const std::vector<boost::filesystem::path> &paths, bool remove_orphaned_symlinks,
-                bool suppress_errors = false);
+                bool remove_empty_directories, bool suppress_errors);
 
         virtual void file_operation(const boost::filesystem::path &file_path, const std::string &hash) noexcept
             override;

@@ -19,6 +19,9 @@ lsdpl --remove-first ~/Music# Remove all duplicates from the folder ~/Music.
 # The last encounter of a file for which a duplicate exists is considered as the original. Eventually all symlinks
 # that are orphaned are removed.
 lsdpl --remove-first --remove-orphaned-symlinks ~/Music
+# The last encounter of a file for which a duplicate exists is considered as the original. Eventually all directories
+# (including ~/Music) that are empty are removed.
+lsdpl --remove-first --remove-empty-directories ~/Music
 
 ```
   

@@ -9,10 +9,11 @@
 #include "boost/filesystem.hpp"
 #include "gflags/gflags.h"
 
-DEFINE_bool(remove_first, false, "Remove (always) the first occurrence of a duplicate");
-DEFINE_bool(remove_last, false, "Remove (always) the last occurrence of a duplicate");
+DEFINE_bool(remove_first, false, "Remove (always) the first occurrence of a duplicate.");
+DEFINE_bool(remove_last, false, "Remove (always) the last occurrence of a duplicate.");
 DEFINE_bool(suppress_errors, false, "Suppress error messages (permission denied, ...)");
-DEFINE_bool(remove_orphaned_symlinks, false, "Remove all orphaned symlinks");
+DEFINE_bool(remove_orphaned_symlinks, false, "Remove all orphaned symlinks.");
+DEFINE_bool(remove_empty_directories, false, "Remove all empty directories.");
 
 int main(int argc, char **argv) {
     gflags::SetUsageMessage("Lists (and removes) all duplicate files based on their content");
@@ -34,13 +35,16 @@ int main(int argc, char **argv) {
     paths.erase(std::unique(paths.begin(), paths.end()), paths.end());
 
     if(FLAGS_remove_first) {
-        lsdpl::rm_first<lsdpl::file_hash> rm_first{paths, FLAGS_remove_orphaned_symlinks, FLAGS_suppress_errors};
+        lsdpl::rm_first<lsdpl::file_hash> rm_first{paths, FLAGS_remove_orphaned_symlinks,
+                                                   FLAGS_remove_empty_directories, FLAGS_suppress_errors};
         rm_first.start();
     } else if(FLAGS_remove_last) {
-        lsdpl::rm_last<lsdpl::file_hash> rm_last{paths, FLAGS_remove_orphaned_symlinks, FLAGS_suppress_errors};
+        lsdpl::rm_last<lsdpl::file_hash> rm_last{paths, FLAGS_remove_orphaned_symlinks,
+                                                 FLAGS_remove_empty_directories, FLAGS_suppress_errors};
         rm_last.start();
     } else {
-        lsdpl::scan_fs<lsdpl::file_hash> scan_fs{paths, FLAGS_remove_orphaned_symlinks, FLAGS_suppress_errors};
+        lsdpl::scan_fs<lsdpl::file_hash> scan_fs{paths, FLAGS_remove_orphaned_symlinks,
+                                                 FLAGS_remove_empty_directories, FLAGS_suppress_errors};
         scan_fs.start();
     }
 

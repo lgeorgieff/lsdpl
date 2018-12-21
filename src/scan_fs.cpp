@@ -25,17 +25,20 @@ namespace {
 } // anonymous namespace
 
 template<typename HASH>
-lsdpl::scan_fs<HASH>::scan_fs(const boost::filesystem::path &path, bool remove_orphaned_symlinks, bool suppress_errors)
-    :hashes_{1024}, queued_paths_{}, remove_orphaned_synmlinks_{remove_orphaned_symlinks},
-    suppress_errors_{suppress_errors}, symlinks_{} {
+lsdpl::scan_fs<HASH>::scan_fs(const boost::filesystem::path &path, bool remove_orphaned_symlinks,
+        bool remove_empty_directories, bool suppress_errors)
+        :hashes_{1024}, queued_paths_{}, remove_orphaned_symlinks_{remove_orphaned_symlinks},
+        remove_empty_directories_{remove_empty_directories}, suppress_errors_{suppress_errors}, symlinks_{},
+        traversed_directories_{} {
     queued_paths_.push(boost::filesystem::absolute(boost::filesystem::path{path}).normalize());
 }
 
 template<typename HASH>
 lsdpl::scan_fs<HASH>::scan_fs(const std::vector<boost::filesystem::path> &paths, bool remove_orphaned_symlinks,
-        bool suppress_errors)
-        :hashes_{1024}, queued_paths_{}, remove_orphaned_synmlinks_{remove_orphaned_symlinks},
-        suppress_errors_{suppress_errors}, symlinks_{} {
+        bool remove_empty_directories, bool suppress_errors)
+        :hashes_{1024}, queued_paths_{}, remove_orphaned_symlinks_{remove_orphaned_symlinks},
+        remove_empty_directories_{remove_empty_directories}, suppress_errors_{suppress_errors}, symlinks_{},
+        traversed_directories_{} {
     std::for_each(paths.begin(), paths.end(), [this](const auto &path){
          queued_paths_.push(boost::filesystem::absolute(path).normalize());
     });
@@ -56,19 +59,43 @@ void lsdpl::scan_fs<HASH>::remove_orphaned_symlinks() noexcept {
                 try {
                     boost::filesystem::remove(symlink);
                 } catch (const boost::filesystem::filesystem_error &error) {
-                    if (!scan_fs<HASH>::suppress_errors()) {
-                        std::cerr << "Could not remove orphaned symlink " << symlink.string() << std::endl;
+                    if (!is_suppress_errors()) {
+                        std::cerr << "Could not remove orphaned symlink " << symlink.string() << " [" << error.what()
+                        << "]" << std::endl;
                     }
                 }
             }
-        } catch (const boost::filesystem::filesystem_error &e) {
-            std::cerr << "Could not remove symlink " << symlink.string() << std::endl;
+        } catch (const boost::filesystem::filesystem_error &error) {
+            if(!is_suppress_errors()) {
+                std::cerr << "Could not remove symlink " << symlink.string() << " [" << error.what()
+                << "]" << std::endl;
+            }
         }
     }
 }
 
 template<typename HASH>
-bool lsdpl::scan_fs<HASH>::suppress_errors() const noexcept { return suppress_errors_; }
+void lsdpl::scan_fs<HASH>::remove_empty_directories() noexcept {
+    while(!traversed_directories_.empty()) {
+        const auto dir{traversed_directories_.top()};
+        traversed_directories_.pop();
+        try {
+            if(boost::filesystem::is_empty(dir)) boost::filesystem::remove(dir);
+        } catch(const boost::filesystem::filesystem_error &error) {
+            if(!is_suppress_errors())
+                std::cerr << "Could not remove directory " << dir.string()<< " [" << error.what() << "]"  << std::endl;
+        }
+    }
+}
+
+template<typename HASH>
+bool lsdpl::scan_fs<HASH>::is_suppress_errors() const noexcept { return suppress_errors_; }
+
+template<typename HASH>
+bool lsdpl::scan_fs<HASH>::is_remove_empty_directories() const noexcept { return remove_empty_directories_; }
+
+template<typename HASH>
+bool lsdpl::scan_fs<HASH>::is_remove_orphaned_symlinks() const noexcept { return remove_orphaned_symlinks_; }
 
 template<typename HASH>
 void lsdpl::scan_fs<HASH>::travers_fs() noexcept {
@@ -77,22 +104,27 @@ void lsdpl::scan_fs<HASH>::travers_fs() noexcept {
         boost::filesystem::path path{queued_paths_.top()};
         queued_paths_.pop();
         if(boost::filesystem::is_symlink(path)) {
-            if(remove_orphaned_synmlinks_) symlinks_.push_front(path);
+            if(is_remove_orphaned_symlinks()) symlinks_.push_front(path);
         } else if(boost::filesystem::is_directory(path)) {
             // We are not interested in directories but in files only, so we ignore it
             boost::filesystem::directory_iterator dir_iter, dir_end;
             try {
                 dir_iter = boost::filesystem::directory_iterator{path};
-            } catch(const boost::filesystem::filesystem_error &err) {
+            } catch(const boost::filesystem::filesystem_error &error) {
                 dir_iter = dir_end;
-                if(!suppress_errors_) std::cerr << "Could not read directory " << path.string() << std::endl;
+                if(!is_suppress_errors()) {
+                    std::cerr << "Could not read directory " << path.string() << " ["
+                    << error.what() << "]" << std::endl;
+                }
             }
-            for(; dir_iter != dir_end; ++dir_iter) queued_paths_.push(dir_iter->path());
+            for(; dir_iter != dir_end; ++dir_iter)
+                queued_paths_.push(boost::filesystem::path{dir_iter->path()}.normalize());
+            if(is_remove_empty_directories()) traversed_directories_.push(path);
             continue;
         } else if(boost::filesystem::is_regular_file(path)) {
             auto hash{file_hash(path)};
             if(hash.empty()) {
-                if(!suppress_errors_) std::cerr << "Could not create hash for " << path.string() << std::endl;
+                if(!is_suppress_errors()) std::cerr << "Could not create hash for " << path.string() << std::endl;
             } else {
                 file_operation(path, hash);
             }
@@ -103,5 +135,6 @@ void lsdpl::scan_fs<HASH>::travers_fs() noexcept {
 template<typename HASH>
 void lsdpl::scan_fs<HASH>::start() noexcept {
     travers_fs();
-    if(remove_orphaned_synmlinks_) remove_orphaned_symlinks();
+    if(remove_orphaned_symlinks_) remove_orphaned_symlinks();
+    if(remove_empty_directories_) remove_empty_directories();
 }
