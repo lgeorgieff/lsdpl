@@ -8,7 +8,9 @@ add_executable(lsdpl
         src/file_hash.cpp src/file_hash.hpp
         src/scan_fs.hpp
         src/rm_first.hpp
-        src/rm_last.hpp)
+        src/rm_last.hpp
+        src/path_entry.cpp src/path_entry.hpp
+        src/utils.cpp src/utils.hpp)
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(OpenSSL REQUIRED)

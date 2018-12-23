@@ -13,23 +13,22 @@ lsdpl::rm_first<HASH>::rm_first(const std::vector<boost::filesystem::path> &path
         :scan_fs<HASH>{paths, remove_orphaned_symlinks, remove_empty_directories, suppress_errors} {}
 
 template<typename HASH>
-void lsdpl::rm_first<HASH>::file_operation(const boost::filesystem::path &file_path, const std::time_t &last_modified,
-        const std::string &hash) noexcept {
+void lsdpl::rm_first<HASH>::file_operation(path_entry &file_path, std::string &hash) noexcept {
     auto original{scan_fs<HASH>::hashes_.find(hash)};
     if (original == scan_fs<HASH>::hashes_.end()) {
-        scan_fs<HASH>::hashes_[hash] = get_timestamp(file_path, this->is_suppress_errors());
+        this->hashes_.insert(std::pair{hash, file_path});
     } else {
         auto to_be_deleted{file_path};
         try {
-            if(last_modified <= original->second.second) {
-                boost::filesystem::remove(file_path);
+            if(file_path.last_modified() <= original->second.last_modified()) {
+                boost::filesystem::remove(file_path.path());
             } else {
-                to_be_deleted = original->second.first;
-                original->second = std::pair{file_path, last_modified};
-                boost::filesystem::remove(to_be_deleted);
+                to_be_deleted = original->second;
+                original->second = file_path;
+                boost::filesystem::remove(to_be_deleted.path());
             }
         } catch(const boost::filesystem::filesystem_error &error) {
-            if(!this->is_suppress_errors()) print_error("Could not remove original file", to_be_deleted, error);
+            if(!this->is_suppress_errors()) print_error("Could not remove original file", to_be_deleted.path(), error);
         }
     }
 }
