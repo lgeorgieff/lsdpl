@@ -11,10 +11,10 @@ Searches for duplicate files based on their actual content. It can:
 # List all duplicates inside the folder ~/Music and do not print errors (e.g. permission denied).
 lsdpl --suppress-errors ~/Music
 # Remove all duplicates from the folders ~/Music and ~/MyMusic and do not print errors (e.g. permission denied).
-# The first encounter of a file for which a duplicate exists is considered as the original.
+# The first encounter (last modified time) of a file for which a duplicate exists is considered as the original.
 lsdpl --suppress-errors --remove-last ~/Music ~/MyMusic
 # Remove all duplicates from the folder ~/Music.
-# The last encounter of a file for which a duplicate exists is considered as the original.
+# The last encounter (last modified time) of a file for which a duplicate exists is considered as the original.
 lsdpl --remove-first ~/Music# Remove all duplicates from the folder ~/Music.
 # The last encounter of a file for which a duplicate exists is considered as the original. Eventually all symlinks
 # that are orphaned are removed.
@@ -22,6 +22,8 @@ lsdpl --remove-first --remove-orphaned-symlinks ~/Music
 # The last encounter of a file for which a duplicate exists is considered as the original. Eventually all directories
 # (including ~/Music) that are empty are removed.
 lsdpl --remove-first --remove-empty-directories ~/Music
+# Remove all duplicates from the folder ~/Music. And print every rm operation on stdout.
+lsdpl --remove-first --verbose ~/Music# Remove all duplicates from the folder ~/Music.
 
 ```
   

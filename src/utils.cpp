@@ -20,10 +20,23 @@ bool lsdpl::is_symlink_broken(const boost::filesystem::path &p) {
     }
 }
 
-void lsdpl::print_error(const std::string &message, const boost::filesystem::path &path, const std::exception &error) {
+void lsdpl::print_error(const std::string &message, const boost::filesystem::path &path,
+        const std::exception &error) noexcept {
     std::cerr << message << " [" << path.string() << "]" << " [" << error.what() << "]" << std::endl;
 }
 
-void lsdpl::print_error(const std::string &message, const boost::filesystem::path &path) {
+void lsdpl::print_error(const std::string &message, const boost::filesystem::path &path) noexcept {
     std::cerr << message << " [" << path.string() << "]" << std::endl;
+}
+
+void lsdpl::print_verbose(operation op, const boost::filesystem::path &path) noexcept {
+    switch(op) {
+        case operation::rm:
+            std::cout << "rm";
+            break;
+        case operation::rmdir:
+            std::cout << "rmdir";
+            break;
+    }
+    std::cout << " " << path.string() << std::endl;
 }

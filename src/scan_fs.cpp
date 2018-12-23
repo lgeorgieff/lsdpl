@@ -7,19 +7,15 @@
 
 template<typename HASH>
 lsdpl::scan_fs<HASH>::scan_fs(const boost::filesystem::path &path, bool remove_orphaned_symlinks,
-        bool remove_empty_directories, bool suppress_errors)
-        :hashes_{1024}, queued_paths_{}, remove_orphaned_symlinks_{remove_orphaned_symlinks},
-        remove_empty_directories_{remove_empty_directories}, suppress_errors_{suppress_errors}, symlinks_{},
-        traversed_directories_{} {
-    queued_paths_.push(boost::filesystem::absolute(boost::filesystem::path{path}).normalize());
-}
-
+        bool remove_empty_directories, bool verbose, bool suppress_errors)
+        :scan_fs{{boost::filesystem::absolute(boost::filesystem::path{path}).normalize()}, remove_orphaned_symlinks,
+                 remove_empty_directories, verbose, suppress_errors} {}
 template<typename HASH>
 lsdpl::scan_fs<HASH>::scan_fs(const std::vector<boost::filesystem::path> &paths, bool remove_orphaned_symlinks,
-        bool remove_empty_directories, bool suppress_errors)
+        bool remove_empty_directories, bool verbose, bool suppress_errors)
         :hashes_{1024}, queued_paths_{}, remove_orphaned_symlinks_{remove_orphaned_symlinks},
-        remove_empty_directories_{remove_empty_directories}, suppress_errors_{suppress_errors}, symlinks_{},
-        traversed_directories_{} {
+        remove_empty_directories_{remove_empty_directories}, verbose_{verbose}, suppress_errors_{suppress_errors},
+        symlinks_{}, traversed_directories_{} {
     std::for_each(paths.begin(), paths.end(), [this](const auto &path){
          queued_paths_.push(path_entry{boost::filesystem::absolute(path).normalize(), is_suppress_errors()});
     });
@@ -39,6 +35,7 @@ void lsdpl::scan_fs<HASH>::remove_orphaned_symlinks() noexcept {
             if (is_symlink_broken(symlink)) {
                 try {
                     boost::filesystem::remove(symlink);
+                    print_verbose(operation::rm, symlink);
                 } catch (const boost::filesystem::filesystem_error &error) {
                     if (!is_suppress_errors()) print_error("Could not remove orphaned symlink", symlink, error);
                 }
@@ -55,7 +52,10 @@ void lsdpl::scan_fs<HASH>::remove_empty_directories() noexcept {
         const auto dir{traversed_directories_.top()};
         traversed_directories_.pop();
         try {
-            if(boost::filesystem::is_empty(dir)) boost::filesystem::remove(dir);
+            if(boost::filesystem::is_empty(dir)) {
+                boost::filesystem::remove(dir);
+                print_verbose(operation::rmdir, dir);
+            }
         } catch(const boost::filesystem::filesystem_error &error) {
             if(!is_suppress_errors()) print_error("Could not remove directory", dir, error);
         }
@@ -70,6 +70,9 @@ bool lsdpl::scan_fs<HASH>::is_remove_empty_directories() const noexcept { return
 
 template<typename HASH>
 bool lsdpl::scan_fs<HASH>::is_remove_orphaned_symlinks() const noexcept { return remove_orphaned_symlinks_; }
+
+template<typename HASH>
+bool lsdpl::scan_fs<HASH>::is_verbose() const noexcept { return verbose_; }
 
 template<typename HASH>
 void lsdpl::scan_fs<HASH>::travers_fs() noexcept {
