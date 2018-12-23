@@ -31,9 +31,6 @@ int main(int argc, char **argv) {
     paths.reserve(argc - 1);
     for(int i{1}; i < argc; ++i) paths.push_back(boost::filesystem::absolute(std::string{argv[i]}).normalize());
     if(argc == 1) paths.push_back(".");
-    // Remove duplicate entries from the user input
-    std::sort(paths.begin(), paths.end());
-    paths.erase(std::unique(paths.begin(), paths.end()), paths.end());
 
     if(FLAGS_remove_first) {
         lsdpl::rm_first<lsdpl::file_hash> rm_first{paths, FLAGS_remove_orphaned_symlinks,

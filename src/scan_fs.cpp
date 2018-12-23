@@ -16,8 +16,19 @@ lsdpl::scan_fs<HASH>::scan_fs(const std::vector<boost::filesystem::path> &paths,
         :hashes_{1024}, queued_paths_{}, remove_orphaned_symlinks_{remove_orphaned_symlinks},
         remove_empty_directories_{remove_empty_directories}, verbose_{verbose}, suppress_errors_{suppress_errors},
         symlinks_{}, traversed_directories_{} {
-    std::for_each(paths.begin(), paths.end(), [this](const auto &path){
-         queued_paths_.push(path_entry{boost::filesystem::absolute(path).normalize(), is_suppress_errors()});
+    std::vector<boost::filesystem::path> tmp_paths;
+    std::for_each(paths.begin(), paths.end(), [this, &tmp_paths](const auto &path){
+        try {
+            tmp_paths.push_back(boost::filesystem::canonical(path));
+        } catch (const boost::filesystem::filesystem_error &error) {
+            if(!is_suppress_errors()) print_error("Could not read", path, error);
+        }
+    });
+    std::sort(tmp_paths.begin(), tmp_paths.end());
+    tmp_paths.erase(std::unique(tmp_paths.begin(), tmp_paths.end()), tmp_paths.end());
+
+    std::for_each(tmp_paths.begin(), tmp_paths.end(), [this](const auto &path){
+         queued_paths_.push(path_entry{path, is_suppress_errors()});
     });
 }
 
