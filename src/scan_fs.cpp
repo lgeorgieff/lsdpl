@@ -22,6 +22,20 @@ namespace {
             return !boost::filesystem::exists(target);
         }
     }
+
+    std::pair<boost::filesystem::path, std::time_t> get_timestamp(const boost::filesystem::path &path,
+            bool suppress_errors) noexcept {
+        std::time_t last_time_modified;
+        try {
+            last_time_modified = boost::filesystem::last_write_time(path);
+        } catch(const boost::filesystem::filesystem_error &error) {
+            if(!suppress_errors) {
+                std::cerr << "Could not read last time modified of " << path.string() << " [" << error.what()
+                << "]" << std::endl;
+            }
+        }
+        return std::pair{path, last_time_modified};
+    }
 } // anonymous namespace
 
 template<typename HASH>
@@ -40,15 +54,16 @@ lsdpl::scan_fs<HASH>::scan_fs(const std::vector<boost::filesystem::path> &paths,
         remove_empty_directories_{remove_empty_directories}, suppress_errors_{suppress_errors}, symlinks_{},
         traversed_directories_{} {
     std::for_each(paths.begin(), paths.end(), [this](const auto &path){
-         queued_paths_.push(boost::filesystem::absolute(path).normalize());
+         queued_paths_.push(get_timestamp(boost::filesystem::absolute(path).normalize(), is_suppress_errors()));
     });
 }
 
 template<typename HASH>
-void lsdpl::scan_fs<HASH>::file_operation(const boost::filesystem::path &file_path, const std::string &hash) noexcept {
+void lsdpl::scan_fs<HASH>::file_operation(const boost::filesystem::path &file_path, const std::time_t &last_modified,
+        const std::string &hash) noexcept {
     auto original{hashes_.find(hash)};
-    if (original == hashes_.end()) hashes_[hash] = file_path;
-    else std::cout << file_path.string() << " -> " << original->second.string() << std::endl;
+    if (original == hashes_.end()) hashes_[hash] = get_timestamp(file_path, is_suppress_errors());
+    else std::cout << file_path.string() << " -> " << original->second.first.string() << std::endl;
 }
 
 template<typename HASH>
@@ -101,32 +116,35 @@ template<typename HASH>
 void lsdpl::scan_fs<HASH>::travers_fs() noexcept {
     HASH file_hash;
     while(!queued_paths_.empty()) {
-        boost::filesystem::path path{queued_paths_.top()};
+        auto path_entry{queued_paths_.top()};
         queued_paths_.pop();
-        if(boost::filesystem::is_symlink(path)) {
-            if(is_remove_orphaned_symlinks()) symlinks_.push_front(path);
-        } else if(boost::filesystem::is_directory(path)) {
+        if(boost::filesystem::is_symlink(path_entry.first)) {
+            if(is_remove_orphaned_symlinks()) symlinks_.push_front(path_entry.first);
+        } else if(boost::filesystem::is_directory(path_entry.first)) {
             // We are not interested in directories but in files only, so we ignore it
             boost::filesystem::directory_iterator dir_iter, dir_end;
             try {
-                dir_iter = boost::filesystem::directory_iterator{path};
+                dir_iter = boost::filesystem::directory_iterator{path_entry.first};
             } catch(const boost::filesystem::filesystem_error &error) {
                 dir_iter = dir_end;
                 if(!is_suppress_errors()) {
-                    std::cerr << "Could not read directory " << path.string() << " ["
+                    std::cerr << "Could not read directory " << path_entry.first.string() << " ["
                     << error.what() << "]" << std::endl;
                 }
             }
-            for(; dir_iter != dir_end; ++dir_iter)
-                queued_paths_.push(boost::filesystem::path{dir_iter->path()}.normalize());
-            if(is_remove_empty_directories()) traversed_directories_.push(path);
+            for(; dir_iter != dir_end; ++dir_iter) {
+                queued_paths_.push(get_timestamp(boost::filesystem::path{dir_iter->path()}.normalize(),
+                        is_suppress_errors()));
+            }
+            if(is_remove_empty_directories()) traversed_directories_.push(path_entry.first);
             continue;
-        } else if(boost::filesystem::is_regular_file(path)) {
-            auto hash{file_hash(path)};
+        } else if(boost::filesystem::is_regular_file(path_entry.first)) {
+            auto hash{file_hash(path_entry.first)};
             if(hash.empty()) {
-                if(!is_suppress_errors()) std::cerr << "Could not create hash for " << path.string() << std::endl;
+                if(!is_suppress_errors()) std::cerr << "Could not create hash for " << path_entry.first.string()
+                << std::endl;
             } else {
-                file_operation(path, hash);
+                file_operation(path_entry.first, path_entry.second, hash);
             }
         }
     }

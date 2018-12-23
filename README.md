@@ -3,8 +3,8 @@
 Searches for duplicate files based on their actual content. It can:
 - list the duplicates
 - remove the duplicates
-  - either the first occurrence is deleted
-  - or all first + 1 occurrences are deleted
+  - either the first occurrence is deleted (first in terms of last modified time)
+  - or all first + 1 occurrences are deleted (last in terms of last modified time)
 
 # Usage
 ```bash

@@ -6,6 +6,8 @@
 #include <forward_list>
 #include <stack>
 #include <cstddef>
+#include <utility>
+#include <ctime>
 #include "boost/filesystem.hpp"
 
 namespace lsdpl {
@@ -17,14 +19,15 @@ namespace lsdpl {
         explicit scan_fs(const std::vector<boost::filesystem::path> &paths, bool remove_orphaned_symlinks,
                 bool remove_empty_directories, bool suppress_errors);
 
-        virtual void file_operation(const boost::filesystem::path &file_path, const std::string &hash) noexcept;
+        virtual void file_operation(const boost::filesystem::path &file_path, const std::time_t &last_modified,
+                const std::string &hash) noexcept;
         void start() noexcept;
         bool is_suppress_errors() const noexcept;
         bool is_remove_orphaned_symlinks() const noexcept;
         bool is_remove_empty_directories() const noexcept;
     protected:
-        std::unordered_map<std::string, boost::filesystem::path> hashes_;
-        std::stack<boost::filesystem::path> queued_paths_;
+        std::unordered_map<std::string, std::pair<boost::filesystem::path, std::time_t>> hashes_;
+        std::stack<std::pair<boost::filesystem::path, std::time_t>> queued_paths_;
 
     private:
         bool remove_orphaned_symlinks_;
