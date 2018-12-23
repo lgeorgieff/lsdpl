@@ -1,6 +1,7 @@
 #pragma once
 
 #include "scan_fs.hpp"
+#include <stdexcept>
 
 #include <iostream>
 
@@ -23,16 +24,21 @@ namespace {
         }
     }
 
+    void print_error(const std::string &message, const boost::filesystem::path &path, const std::exception &error) {
+        std::cerr << message << " [" << path.string() << "]" << " [" << error.what() << "]" << std::endl;
+    }
+
+    void print_error(const std::string &message, const boost::filesystem::path &path) {
+        std::cerr << message << " [" << path.string() << "]" << std::endl;
+    }
+
     std::pair<boost::filesystem::path, std::time_t> get_timestamp(const boost::filesystem::path &path,
             bool suppress_errors) noexcept {
         std::time_t last_time_modified;
         try {
             last_time_modified = boost::filesystem::last_write_time(path);
         } catch(const boost::filesystem::filesystem_error &error) {
-            if(!suppress_errors) {
-                std::cerr << "Could not read last time modified of " << path.string() << " [" << error.what()
-                << "]" << std::endl;
-            }
+            if(!suppress_errors) print_error("Could not read last time modified", path, error);
         }
         return std::pair{path, last_time_modified};
     }
@@ -74,17 +80,11 @@ void lsdpl::scan_fs<HASH>::remove_orphaned_symlinks() noexcept {
                 try {
                     boost::filesystem::remove(symlink);
                 } catch (const boost::filesystem::filesystem_error &error) {
-                    if (!is_suppress_errors()) {
-                        std::cerr << "Could not remove orphaned symlink " << symlink.string() << " [" << error.what()
-                        << "]" << std::endl;
-                    }
+                    if (!is_suppress_errors()) print_error("Could not remove orphaned symlink", symlink, error);
                 }
             }
         } catch (const boost::filesystem::filesystem_error &error) {
-            if(!is_suppress_errors()) {
-                std::cerr << "Could not remove symlink " << symlink.string() << " [" << error.what()
-                << "]" << std::endl;
-            }
+            if(!is_suppress_errors()) print_error("Could not remove symlink", symlink, error);
         }
     }
 }
@@ -97,8 +97,7 @@ void lsdpl::scan_fs<HASH>::remove_empty_directories() noexcept {
         try {
             if(boost::filesystem::is_empty(dir)) boost::filesystem::remove(dir);
         } catch(const boost::filesystem::filesystem_error &error) {
-            if(!is_suppress_errors())
-                std::cerr << "Could not remove directory " << dir.string()<< " [" << error.what() << "]"  << std::endl;
+            if(!is_suppress_errors()) print_error("Could not remove directory", dir, error);
         }
     }
 }
@@ -127,10 +126,7 @@ void lsdpl::scan_fs<HASH>::travers_fs() noexcept {
                 dir_iter = boost::filesystem::directory_iterator{path_entry.first};
             } catch(const boost::filesystem::filesystem_error &error) {
                 dir_iter = dir_end;
-                if(!is_suppress_errors()) {
-                    std::cerr << "Could not read directory " << path_entry.first.string() << " ["
-                    << error.what() << "]" << std::endl;
-                }
+                if(!is_suppress_errors()) print_error("Could not read directory", path_entry.first, error);
             }
             for(; dir_iter != dir_end; ++dir_iter) {
                 queued_paths_.push(get_timestamp(boost::filesystem::path{dir_iter->path()}.normalize(),
@@ -141,8 +137,7 @@ void lsdpl::scan_fs<HASH>::travers_fs() noexcept {
         } else if(boost::filesystem::is_regular_file(path_entry.first)) {
             auto hash{file_hash(path_entry.first)};
             if(hash.empty()) {
-                if(!is_suppress_errors()) std::cerr << "Could not create hash for " << path_entry.first.string()
-                << std::endl;
+                if(!is_suppress_errors()) print_error("Could not create hash", path_entry.first);
             } else {
                 file_operation(path_entry.first, path_entry.second, hash);
             }

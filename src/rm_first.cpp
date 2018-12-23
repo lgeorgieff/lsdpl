@@ -19,19 +19,17 @@ void lsdpl::rm_first<HASH>::file_operation(const boost::filesystem::path &file_p
     if (original == scan_fs<HASH>::hashes_.end()) {
         scan_fs<HASH>::hashes_[hash] = get_timestamp(file_path, this->is_suppress_errors());
     } else {
+        auto to_be_deleted{file_path};
         try {
             if(last_modified <= original->second.second) {
                 boost::filesystem::remove(file_path);
             } else {
-                auto to_be_deleted{original->second.first};
+                to_be_deleted = original->second.first;
                 original->second = std::pair{file_path, last_modified};
                 boost::filesystem::remove(to_be_deleted);
             }
         } catch(const boost::filesystem::filesystem_error &error) {
-            if(!this->is_suppress_errors()) {
-                std::cerr << "Could not remove original file " << original->second.first.string() << " ["
-                << error.what() << "]" << std::endl;
-            }
+            if(!this->is_suppress_errors()) print_error("Could not remove original file", to_be_deleted, error);
         }
     }
 }
