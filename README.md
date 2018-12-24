@@ -34,7 +34,7 @@ lsdpl --remove-first --verbose ~/Music# Remove all duplicates from the folder ~/
 - [gflags](https://github.com/gflags/gflags)
 
 # Installation
-1. Install a C++ compiler (developer with [clang++-6.0](http://clang.llvm.org/))
+1. Install a C++ compiler (developed with [clang++-6.0](http://clang.llvm.org/))
 2. Install all dependencies
 3. git clone https://github.com/lgeorgieff/lsdpl.git
 4. cd lsdpl
