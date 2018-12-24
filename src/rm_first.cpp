@@ -5,17 +5,17 @@
 template<typename HASH>
 lsdpl::rm_first<HASH>::rm_first(const boost::filesystem::path &path, bool remove_orphaned_symlinks,
         bool remove_empty_directories, bool verbose, bool suppress_errors)
-        :scan_fs<HASH>{path, remove_orphaned_symlinks, remove_empty_directories, verbose, suppress_errors} {}
+        :rm_base<HASH>{path, remove_orphaned_symlinks, remove_empty_directories, verbose, suppress_errors} {}
 
 template<typename HASH>
 lsdpl::rm_first<HASH>::rm_first(const std::vector<boost::filesystem::path> &paths, bool remove_orphaned_symlinks,
         bool remove_empty_directories, bool verbose, bool suppress_errors)
-        :scan_fs<HASH>{paths, remove_orphaned_symlinks, remove_empty_directories, verbose, suppress_errors} {}
+        :rm_base<HASH>{paths, remove_orphaned_symlinks, remove_empty_directories, verbose, suppress_errors} {}
 
 template<typename HASH>
 void lsdpl::rm_first<HASH>::file_operation(path_entry &file_path, std::string &hash) noexcept {
-    auto original{scan_fs<HASH>::hashes_.find(hash)};
-    if (original == scan_fs<HASH>::hashes_.end()) {
+    auto original{rm_base<HASH>::hashes_.find(hash)};
+    if (original == rm_base<HASH>::hashes_.end()) {
         this->hashes_.insert(std::pair{hash, file_path});
     } else {
         auto to_be_deleted{file_path};

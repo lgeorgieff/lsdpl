@@ -13,7 +13,7 @@ lsdpl::scan_fs<HASH>::scan_fs(const boost::filesystem::path &path, bool remove_o
 template<typename HASH>
 lsdpl::scan_fs<HASH>::scan_fs(const std::vector<boost::filesystem::path> &paths, bool remove_orphaned_symlinks,
         bool remove_empty_directories, bool verbose, bool suppress_errors)
-        :hashes_{1024}, queued_paths_{}, remove_orphaned_symlinks_{remove_orphaned_symlinks},
+        :queued_paths_{}, remove_orphaned_symlinks_{remove_orphaned_symlinks},
         remove_empty_directories_{remove_empty_directories}, verbose_{verbose}, suppress_errors_{suppress_errors},
         symlinks_{}, traversed_directories_{} {
     std::vector<boost::filesystem::path> tmp_paths;
@@ -30,13 +30,6 @@ lsdpl::scan_fs<HASH>::scan_fs(const std::vector<boost::filesystem::path> &paths,
     std::for_each(tmp_paths.begin(), tmp_paths.end(), [this](const auto &path){
          queued_paths_.push(path_entry{path, is_suppress_errors()});
     });
-}
-
-template<typename HASH>
-void lsdpl::scan_fs<HASH>::file_operation(path_entry &file_path, std::string &hash) noexcept {
-    auto original{hashes_.find(hash)};
-    if (original == hashes_.end()) hashes_.insert(std::pair{hash, file_path});
-    else std::cout << file_path.path().string() << " -> " << original->second.path().string() << std::endl;
 }
 
 template<typename HASH>

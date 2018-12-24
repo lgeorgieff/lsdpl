@@ -7,8 +7,10 @@ add_executable(lsdpl
         src/main.cpp
         src/file_hash.cpp src/file_hash.hpp
         src/scan_fs.hpp
+        src/rm_base.hpp
         src/rm_first.hpp
         src/rm_last.hpp
+        src/dpl_finder.hpp
         src/path_entry.cpp src/path_entry.hpp
         src/utils.cpp src/utils.hpp)
 

@@ -1,5 +1,5 @@
 #include "file_hash.hpp"
-#include "scan_fs.hpp"
+#include "dpl_finder.hpp"
 #include "rm_first.hpp"
 #include "rm_last.hpp"
 
@@ -38,13 +38,15 @@ int main(int argc, char **argv) {
                                                    FLAGS_suppress_errors};
         rm_first.start();
     } else if(FLAGS_remove_last) {
-        lsdpl::rm_last<lsdpl::file_hash> rm_last{paths, FLAGS_remove_orphaned_symlinks,
-                                                 FLAGS_remove_empty_directories, FLAGS_verbose, FLAGS_suppress_errors};
+        lsdpl::rm_last<lsdpl::file_hash> rm_last{paths, FLAGS_remove_orphaned_symlinks, FLAGS_remove_empty_directories,
+                                                 FLAGS_verbose, FLAGS_suppress_errors};
         rm_last.start();
     } else {
-        lsdpl::scan_fs<lsdpl::file_hash> scan_fs{paths, FLAGS_remove_orphaned_symlinks,
-                                                 FLAGS_remove_empty_directories, FLAGS_verbose, FLAGS_suppress_errors};
-        scan_fs.start();
+        lsdpl::dpl_finder<lsdpl::file_hash> dpl_finder{paths, FLAGS_remove_orphaned_symlinks,
+                                                       FLAGS_remove_empty_directories, FLAGS_verbose,
+                                                       FLAGS_suppress_errors};
+        dpl_finder.start();
+        dpl_finder.print(std::cout);
     }
 
     return 0;

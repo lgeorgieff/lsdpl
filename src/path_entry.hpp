@@ -15,6 +15,7 @@ namespace lsdpl {
 
         const boost::filesystem::path &path() const noexcept;
         const std::time_t &last_modified() const noexcept;
+        bool operator<(const path_entry &other) const noexcept;
     private:
         boost::filesystem::path path_;
         std::time_t last_modified_;

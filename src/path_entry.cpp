@@ -13,3 +13,7 @@ lsdpl::path_entry::path_entry(const boost::filesystem::path &path, bool suppress
 const boost::filesystem::path& lsdpl::path_entry::path() const noexcept { return path_; }
 
 const std::time_t& lsdpl::path_entry::last_modified() const noexcept { return last_modified_; }
+
+bool lsdpl::path_entry::operator<(const path_entry &other) const noexcept {
+    return last_modified_ < other.last_modified_;
+}
