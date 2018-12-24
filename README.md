@@ -1,10 +1,10 @@
 # lsdpl
 
-Searches for duplicate files based on their actual content. It can:
-- list the duplicates
-- remove the duplicates
+Searches recursively for duplicate files based on their actual content. It allows to:
+- list duplicates
+- remove duplicates
   - either the first occurrence is deleted (first in terms of last modified time)
-  - or all first + 1 occurrences are deleted (last in terms of last modified time)
+  - or all first + 1 occurrences are deleted (first + 1 in terms of last modified time)
 
 # Usage
 ```bash
@@ -28,17 +28,19 @@ lsdpl --remove-first --verbose ~/Music# Remove all duplicates from the folder ~/
 ```
   
 # Dependencies
+- [cmake 3.13](https://cmake.org/)
 - [boost filesystem](https://www.boost.org/doc/libs/1_68_0/libs/filesystem/doc/index.htm)
 - [OpenSSL (crypto)](https://github.com/openssl/openssl)
 - [gflags](https://github.com/gflags/gflags)
 
 # Installation
-1. Install all depdencies
-2. git clone https://github.com/lgeorgieff/lsdpl.git
-3. cd lsdpl
-4. mkdir build && cd build
-5. cmake ..
-6. make
+1. Install a C++ compiler (developer with [clang++-6.0](http://clang.llvm.org/))
+2. Install all dependencies
+3. git clone https://github.com/lgeorgieff/lsdpl.git
+4. cd lsdpl
+5. mkdir build && cd build
+6. cmake ..
+7. make
 
 # License
 This project is licensed under [BSD 3-Clause license](./LICENSE.txt).
