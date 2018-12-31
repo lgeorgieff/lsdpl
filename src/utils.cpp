@@ -40,3 +40,16 @@ void lsdpl::print_verbose(operation op, const boost::filesystem::path &path) noe
     }
     std::cout << " " << path.string() << std::endl;
 }
+
+void lsdpl::print_verbose(operation op, const boost::filesystem::path &path,
+    const boost::filesystem::path &original) noexcept {
+    switch(op) {
+        case operation::rm:
+            std::cout << "rm";
+        break;
+        case operation::rmdir:
+            std::cout << "rmdir";
+        break;
+    }
+    std::cout << " " << path.string() << " -> " << original.string() << std::endl;
+}

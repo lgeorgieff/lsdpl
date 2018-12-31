@@ -25,7 +25,7 @@ void lsdpl::rm_last<HASH>::file_operation(path_entry &file_path, std::string &ha
                 original->second = file_path;
             }
             boost::filesystem::remove(to_be_deleted.path());
-            print_verbose(operation::rm, to_be_deleted.path());
+            print_verbose(operation::rm, to_be_deleted.path(), original->second.path());
         } catch(const boost::filesystem::filesystem_error &error) {
             if(!this->is_suppress_errors()) print_error("Could not remove duplicate file", to_be_deleted.path(), error);
         }

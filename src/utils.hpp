@@ -17,4 +17,6 @@ namespace lsdpl {
     };
 
     void print_verbose(operation op, const boost::filesystem::path &path) noexcept;
+    void print_verbose(operation op, const boost::filesystem::path &path,
+        const boost::filesystem::path &original) noexcept;
 } // namespace lsdpl
