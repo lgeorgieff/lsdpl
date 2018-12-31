@@ -18,7 +18,7 @@ DEFINE_bool(verbose, false, "Enable verbose mode.");
 
 int main(int argc, char **argv) {
     gflags::SetUsageMessage("Lists (and removes) all duplicate files based on their content");
-    gflags::SetVersionString("0.2.0");
+    gflags::SetVersionString("0.2.2");
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     if(FLAGS_remove_first && FLAGS_remove_last) {
